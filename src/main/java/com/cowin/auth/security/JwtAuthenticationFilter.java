@@ -32,7 +32,9 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 var auth = new UsernamePasswordAuthenticationToken(
                         claims.getSubject(), null, List.of(new SimpleGrantedAuthority("ROLE_USER")));
                 SecurityContextHolder.getContext().setAuthentication(auth);
-            } catch (Exception ignored) {}
+            } catch (Exception e) {
+                logger.error("Invalid jwt token",e);
+            }
         }
         filterChain.doFilter(request, response);
     }
