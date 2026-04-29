@@ -20,7 +20,9 @@ public class OtpService {
     private final OtpRepository otpRepository;
     private final OtpGenerator otpGenerator;
 
+
     public void sendOtp(String mobileNumber) {
+        System.out.println("Inside service, mobile: " + mobileNumber);
         Long count = otpRepository.incrementRateLimit(mobileNumber, RATE_LIMIT_WINDOW);
         if (count != null && count > MAX_OTP_REQUESTS) {
             throw new AuthException("Too many OTP requests. Please try again after 5 minutes.");

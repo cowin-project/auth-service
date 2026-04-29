@@ -17,6 +17,7 @@ public class AuthController {
 
     @PostMapping("/send-otp")
     public ApiResponse sendOtp(@Valid @RequestBody SendOtpRequest request) {
+        System.out.println("Controller hit: " + request.mobileNumber());
         otpService.sendOtp(request.mobileNumber());
         return new ApiResponse("OTP sent successfully");
     }

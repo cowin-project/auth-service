@@ -16,52 +16,31 @@ import java.util.Date;
 
 @Service
 public class JwtService {
-    @Value("${security.jwt.private-key}")
-    private String privateKeyPem;
 
-    @Value("${security.jwt.public-key}")
-    private String publicKeyPem;
+    @Value("${security.jwt.secret}")
+    private String secret;
 
-    @Value("${security.jwt.expiration-seconds:3600}")
-    private long expirySeconds;
+    @Value("${security.jwt.expiration}")
+    private long expiry;
 
     public String generateToken(String mobileNumber) {
-        Instant now = Instant.now();
         return Jwts.builder()
-                .subject(mobileNumber)
-                .issuedAt(Date.from(now))
-                .expiration(Date.from(now.plusSeconds(expirySeconds)))
-                .signWith(getPrivateKey())
+                .setSubject(mobileNumber)
+                .setIssuedAt(new Date())
+                .setExpiration(new Date(System.currentTimeMillis() + expiry))
+                .signWith(io.jsonwebtoken.security.Keys.hmacShaKeyFor(secret.getBytes()))
                 .compact();
     }
 
     public Claims validateAndParse(String token) {
-        return Jwts.parser().verifyWith(getPublicKey()).build().parseSignedClaims(token).getPayload();
+        return Jwts.parserBuilder()
+                .setSigningKey(secret.getBytes())
+                .build()
+                .parseClaimsJws(token)
+                .getBody();
     }
 
-    public long getExpirySeconds() { return expirySeconds; }
-
-    private PrivateKey getPrivateKey() {
-        try {
-            String key = privateKeyPem.replace("-----BEGIN PRIVATE KEY-----", "")
-                    .replace("-----END PRIVATE KEY-----", "")
-                    .replaceAll("\\s", "");
-            byte[] decoded = Base64.getDecoder().decode(key);
-            return KeyFactory.getInstance("RSA").generatePrivate(new PKCS8EncodedKeySpec(decoded));
-        } catch (Exception e) {
-            throw new IllegalStateException("Invalid private key", e);
-        }
-    }
-
-    private PublicKey getPublicKey() {
-        try {
-            String key = publicKeyPem.replace("-----BEGIN PUBLIC KEY-----", "")
-                    .replace("-----END PUBLIC KEY-----", "")
-                    .replaceAll("\\s", "");
-            byte[] decoded = Base64.getDecoder().decode(key);
-            return KeyFactory.getInstance("RSA").generatePublic(new X509EncodedKeySpec(decoded));
-        } catch (Exception e) {
-            throw new IllegalStateException("Invalid public key", e);
-        }
+    public long getExpirySeconds() {
+        return expiry;
     }
 }
